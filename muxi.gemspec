@@ -29,11 +29,11 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Runtime dependencies - minimal, stdlib only
-  # Net::HTTP, JSON, OpenSSL, SecureRandom are stdlib
+  # Runtime dependencies
+  spec.add_dependency "base64"  # Required since Ruby 3.4 (was removed from stdlib)
 
   # Development dependencies
-  spec.add_development_dependency "bundler", "~> 2.0"
+  spec.add_development_dependency "bundler", ">= 2.0"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "rubocop", "~> 1.0"
