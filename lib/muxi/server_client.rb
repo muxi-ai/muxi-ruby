@@ -2,9 +2,9 @@
 
 module Muxi
   class ServerConfig
-    attr_accessor :url, :key_id, :secret_key, :max_retries, :timeout, :debug, :logger
+    attr_accessor :url, :key_id, :secret_key, :max_retries, :timeout, :debug, :logger, :_app
 
-    def initialize(url:, key_id:, secret_key:, max_retries: 0, timeout: 30, debug: false, logger: nil)
+    def initialize(url:, key_id:, secret_key:, max_retries: 0, timeout: 30, debug: false, logger: nil, _app: nil)
       @url = url
       @key_id = key_id
       @secret_key = secret_key
@@ -12,6 +12,7 @@ module Muxi
       @timeout = timeout
       @debug = debug
       @logger = logger
+      @_app = _app
     end
   end
 
@@ -25,7 +26,8 @@ module Muxi
         timeout: cfg.timeout,
         max_retries: cfg.max_retries,
         debug: cfg.debug,
-        logger: cfg.logger
+        logger: cfg.logger,
+        app: cfg._app
       )
     end
 

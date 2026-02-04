@@ -3,6 +3,7 @@
 require_relative "muxi/version"
 require_relative "muxi/errors"
 require_relative "muxi/auth"
+require_relative "muxi/version_check"
 require_relative "muxi/transport"
 require_relative "muxi/server_client"
 require_relative "muxi/formation_client"

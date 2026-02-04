@@ -8,12 +8,12 @@ require "securerandom"
 module Muxi
   class FormationConfig
     attr_accessor :formation_id, :url, :server_url, :base_url, :admin_key, :client_key,
-                  :max_retries, :timeout, :debug, :logger
+                  :max_retries, :timeout, :debug, :logger, :_app
 
     def initialize(
       formation_id: nil, url: nil, server_url: nil, base_url: nil,
       admin_key: nil, client_key: nil, max_retries: 0, timeout: 30,
-      debug: false, logger: nil
+      debug: false, logger: nil, _app: nil
     )
       @formation_id = formation_id
       @url = url
@@ -25,13 +25,14 @@ module Muxi
       @timeout = timeout
       @debug = debug
       @logger = logger
+      @_app = _app
     end
   end
 
   class FormationTransport
     RETRY_STATUSES = [429, 500, 502, 503, 504].freeze
 
-    def initialize(base_url:, admin_key:, client_key:, timeout:, max_retries:, debug:, logger:)
+    def initialize(base_url:, admin_key:, client_key:, timeout:, max_retries:, debug:, logger:, app: nil)
       @base_url = base_url.chomp("/")
       @admin_key = (admin_key || "").strip
       @client_key = (client_key || "").strip
@@ -39,6 +40,7 @@ module Muxi
       @max_retries = max_retries || 0
       @debug = debug || Muxi.debug?
       @logger = logger || Logger.new($stdout, level: Logger::DEBUG)
+      @app = app
     end
 
     def request_json(method, path, params: nil, body: nil, use_admin: true, user_id: "")
@@ -54,6 +56,9 @@ module Muxi
           response = execute_request(method, url, headers, body)
           elapsed = Time.now - start_time
           log("#{method} #{full_path} -> #{response.code} (#{elapsed.round(3)}s)")
+
+          # Check for SDK updates (non-blocking, once per process)
+          VersionCheck.check_for_updates(response.to_hash.transform_values(&:first))
 
           if response.code.to_i >= 400
             handle_error_response(response, method, url, attempt, backoff)
@@ -133,6 +138,8 @@ module Muxi
         "X-Muxi-Client" => "ruby/#{VERSION}",
         "X-Muxi-Idempotency-Key" => SecureRandom.uuid
       }
+
+      headers["X-Muxi-App"] = @app if @app && !@app.empty?
 
       if use_admin
         raise ArgumentError, "admin key required" if @admin_key.empty?
@@ -243,7 +250,8 @@ module Muxi
         timeout: cfg.timeout,
         max_retries: cfg.max_retries,
         debug: cfg.debug,
-        logger: cfg.logger
+        logger: cfg.logger,
+        app: cfg._app
       )
     end
 

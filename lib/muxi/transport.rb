@@ -12,7 +12,7 @@ module Muxi
 
     RETRY_STATUSES = [429, 500, 502, 503, 504].freeze
 
-    def initialize(base_url:, key_id:, secret_key:, timeout: 30, max_retries: 0, debug: false, logger: nil)
+    def initialize(base_url:, key_id:, secret_key:, timeout: 30, max_retries: 0, debug: false, logger: nil, app: nil)
       @base_url = base_url.chomp("/")
       @key_id = (key_id || "").strip
       @secret_key = (secret_key || "").strip
@@ -20,6 +20,7 @@ module Muxi
       @max_retries = max_retries || 0
       @debug = debug || Muxi.debug?
       @logger = logger || Logger.new($stdout, level: Logger::DEBUG)
+      @app = app
     end
 
     def request_json(method, path, params: nil, body: nil)
@@ -35,6 +36,9 @@ module Muxi
           response = execute_request(method, url, headers, body)
           elapsed = Time.now - start_time
           log("#{method} #{full_path} -> #{response.code} (#{elapsed.round(3)}s)")
+
+          # Check for SDK updates (non-blocking, once per process)
+          VersionCheck.check_for_updates(response.to_hash.transform_values(&:first))
 
           if response.code.to_i >= 400
             handle_error_response(response, method, url, attempt, backoff)
@@ -88,7 +92,7 @@ module Muxi
     end
 
     def build_headers(method, path, accept: nil)
-      {
+      headers = {
         "Authorization" => Auth.build_auth_header(@key_id, @secret_key, method, path),
         "Content-Type" => "application/json",
         "Accept" => accept || "application/json",
@@ -96,6 +100,8 @@ module Muxi
         "X-Muxi-Client" => "#{RUBY_PLATFORM}/ruby#{RUBY_VERSION}",
         "X-Muxi-Idempotency-Key" => SecureRandom.uuid
       }
+      headers["X-Muxi-App"] = @app if @app && !@app.empty?
+      headers
     end
 
     def build_request(method, uri, headers, body)
