@@ -16,7 +16,7 @@ module Muxi
         return if @checked
         @checked = true
 
-        return unless Muxi.debug?
+        return if ENV["MUXI_SDK_VERSION_NOTIFICATION"] == "0"
 
         latest = headers["X-Muxi-SDK-Latest"] || headers["x-muxi-sdk-latest"]
         return unless latest
