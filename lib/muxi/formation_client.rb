@@ -8,12 +8,12 @@ require "securerandom"
 module Muxi
   class FormationConfig
     attr_accessor :formation_id, :url, :server_url, :base_url, :admin_key, :client_key,
-                  :max_retries, :timeout, :debug, :logger, :_app
+                  :max_retries, :timeout, :debug, :logger, :mode, :_app
 
     def initialize(
       formation_id: nil, url: nil, server_url: nil, base_url: nil,
       admin_key: nil, client_key: nil, max_retries: 0, timeout: 30,
-      debug: false, logger: nil, _app: nil
+      debug: false, logger: nil, mode: "live", _app: nil
     )
       @formation_id = formation_id
       @url = url
@@ -25,6 +25,7 @@ module Muxi
       @timeout = timeout
       @debug = debug
       @logger = logger
+      @mode = mode
       @_app = _app
     end
   end
@@ -536,7 +537,8 @@ module Muxi
       return cfg.base_url.chomp("/") if cfg.base_url
       return "#{cfg.url.chomp('/')}/v1" if cfg.url
       if cfg.server_url && cfg.formation_id
-        return "#{cfg.server_url.chomp('/')}/api/#{cfg.formation_id}/v1"
+        prefix = cfg.mode == "draft" ? "draft" : "api"
+        return "#{cfg.server_url.chomp('/')}/#{prefix}/#{cfg.formation_id}/v1"
       end
       raise ArgumentError, "must set base_url, url, or server_url+formation_id"
     end
