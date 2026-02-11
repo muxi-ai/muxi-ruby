@@ -21,6 +21,15 @@ RSpec.configure do |config|
 
   config.order = :random
   Kernel.srand config.seed
+
+  # Allow real HTTP connections for integration tests
+  config.before(:each, :integration) do
+    WebMock.allow_net_connect!
+  end
+
+  config.after(:each, :integration) do
+    WebMock.disable_net_connect!(allow_localhost: true)
+  end
 end
 
 WebMock.disable_net_connect!(allow_localhost: true)
