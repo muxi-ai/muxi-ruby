@@ -1,6 +1,6 @@
 # MUXI Ruby SDK
 
-Official Ruby SDK for [MUXI](https://muxi.ai) — infrastructure for AI agents.
+Official Ruby SDK for [MUXI](https://muxi.org) — infrastructure for AI agents.
 
 **Highlights**
 - Pure Ruby with stdlib only (no external dependencies)
