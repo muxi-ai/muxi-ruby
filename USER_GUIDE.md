@@ -110,7 +110,7 @@ Error types: `AuthenticationError`, `AuthorizationError`, `NotFoundError`, `Vali
 | Identifiers | `get_user_identifiers_for_user`, `link_user_identifier`, `unlink_user_identifier` |
 | Triggers/SOP | `get_triggers`, `get_trigger`, `fire_trigger`, `get_sops`, `get_sop` |
 | Audit | `get_audit_log`, `clear_audit_log` |
-| Config | `get_status`, `get_config`, `get_formation_info`, `get_async_config`, `get_a2a_config`, `get_logging_config`, `get_logging_destinations`, `get_overlord_config`, `get_overlord_persona`, `get_llm_settings` |
+| Config | `get_status`, `get_config`, `get_formation_info`, `get_async_config`, `get_a2a_config`, `get_logging_config`, `get_logging_destinations`, `get_overlord_config`, `get_overlord_soul`, `get_llm_settings` |
 | Streaming | `stream_events`, `stream_logs`, `stream_request` |
 | User | `resolve_user` |
 

@@ -475,8 +475,8 @@ module Muxi
       @transport.request_json("GET", "/overlord", use_admin: true)
     end
 
-    def get_overlord_persona
-      @transport.request_json("GET", "/overlord/persona", use_admin: true)
+    def get_overlord_soul
+      @transport.request_json("GET", "/overlord/soul", use_admin: true)
     end
 
     def get_llm_settings
