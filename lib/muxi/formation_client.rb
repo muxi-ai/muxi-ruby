@@ -420,6 +420,19 @@ module Muxi
       @transport.request_json("DELETE", "/scheduler/jobs/#{job_id}", use_admin: true)
     end
 
+    def update_scheduler_job(job_id, **updates)
+      body = updates.slice(:message, :schedule, :title)
+      @transport.request_json("PUT", "/scheduler/jobs/#{job_id}", body: body, use_admin: true)
+    end
+
+    def pause_scheduler_job(job_id)
+      @transport.request_json("POST", "/scheduler/jobs/#{job_id}/pause", use_admin: true)
+    end
+
+    def resume_scheduler_job(job_id)
+      @transport.request_json("POST", "/scheduler/jobs/#{job_id}/resume", use_admin: true)
+    end
+
     # Async / logging / a2a
     def get_async_config
       @transport.request_json("GET", "/async", use_admin: true)
