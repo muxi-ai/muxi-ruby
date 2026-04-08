@@ -98,32 +98,97 @@ module Muxi
       
       event = nil
       data_parts = []
+      buffer = +""
 
       http.request(request) do |response|
         response.read_body do |chunk|
-          chunk.each_line do |raw_line|
-            line = raw_line.chomp
-            next if line.start_with?(":")
+          buffer << chunk
+          while (newline = buffer.index("\n"))
+            raw_line = buffer.slice!(0..newline)
+            line = raw_line.delete_suffix("\n").delete_suffix("\r")
+            parsed = consume_sse_line(line, event, data_parts)
+            event = parsed[:event]
+            data_parts = parsed[:data_parts]
+            next unless parsed[:emitted]
 
-            if line.empty?
-              if data_parts.any?
-                yield({ "event" => event || "message", "data" => data_parts.join("\n") })
-              end
-              event = nil
-              data_parts = []
-              next
-            end
-
-            if line.start_with?("event:")
-              event = line[6..].strip
-            elsif line.start_with?("data:")
-              data_parts << line[5..].strip
-            end
+            throw_if_route_error(parsed[:emitted])
+            yield(parsed[:emitted])
           end
         end
       end
+
+      unless buffer.empty?
+        parsed = consume_sse_line(buffer.delete_suffix("\r"), event, data_parts)
+        event = parsed[:event]
+        data_parts = parsed[:data_parts]
+        if parsed[:emitted]
+          throw_if_route_error(parsed[:emitted])
+          yield(parsed[:emitted])
+        end
+      end
+
+      emitted = flush_sse_event(event, data_parts)
+      if emitted
+        throw_if_route_error(emitted)
+        yield(emitted)
+      end
     end
 
+    private
+
+    def consume_sse_line(line, event, data_parts)
+      return { event: event, data_parts: data_parts, emitted: nil } if line.start_with?(":")
+
+      if line.empty?
+        return {
+          event: nil,
+          data_parts: [],
+          emitted: flush_sse_event(event, data_parts)
+        }
+      end
+
+      field, value = split_sse_field(line)
+      if field == "event"
+        event = value
+      elsif field == "data"
+        data_parts = data_parts + [value]
+      end
+
+      { event: event, data_parts: data_parts, emitted: nil }
+    end
+
+    def flush_sse_event(event, data_parts)
+      return nil if event.nil? && data_parts.empty?
+
+      { "event" => event || "message", "data" => data_parts.join("\n") }
+    end
+
+    def throw_if_route_error(event)
+      return unless event["event"] == "error"
+
+      code = "STREAM_ERROR"
+      message = event["data"].to_s.empty? ? "stream error" : event["data"].to_s
+      details = nil
+
+      begin
+        parsed = JSON.parse(event["data"].to_s)
+        if parsed.is_a?(Hash)
+          details = parsed
+          code = parsed["type"] || parsed["code"] || parsed["error"] || code
+          message = parsed["error"] || parsed["message"] || message
+        end
+      rescue JSON::ParserError
+      end
+
+      raise MuxiError.new(code, message, 0, details)
+    end
+
+    def split_sse_field(line)
+      field, value = line.split(":", 2)
+      value ||= ""
+      value = value[1..] if value.start_with?(" ")
+      [field, value]
+    end
     private
 
     def build_url(path, params)
