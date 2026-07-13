@@ -170,12 +170,14 @@ module Muxi
 
       req = obj["request"] || {}
       request_id = req["id"] || obj["request_id"]
+      idempotency_key = req["idempotency_key"]
       ts = obj["timestamp"]
       data = obj["data"]
 
       if data.is_a?(Hash)
         out = data.dup
         out["request_id"] ||= request_id if request_id
+        out["idempotency_key"] ||= idempotency_key if idempotency_key
         out["timestamp"] ||= ts if ts
         out
       else

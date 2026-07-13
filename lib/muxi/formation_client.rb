@@ -6,6 +6,25 @@ require "json"
 require "securerandom"
 
 module Muxi
+  # Widgets from an `event: ui` stream frame; [] for other frames.
+  #
+  # The runtime delivers the response envelope's optional `ui` array
+  # (options, action_link, mcp_resource widgets) as a single `event: ui`
+  # SSE frame before `event: done`. Unknown widget types should be
+  # ignored (progressive enhancement).
+  def self.parse_ui_widgets(event)
+    return [] unless event.is_a?(Hash) && event["event"] == "ui"
+
+    begin
+      parsed = JSON.parse(event["data"].to_s)
+    rescue JSON::ParserError
+      return []
+    end
+
+    ui = parsed.is_a?(Hash) ? parsed["ui"] : nil
+    ui.is_a?(Array) ? ui : []
+  end
+
   class FormationConfig
     attr_accessor :formation_id, :url, :server_url, :base_url, :admin_key, :client_key,
                   :max_retries, :timeout, :debug, :logger, :mode, :_app
@@ -287,12 +306,14 @@ module Muxi
 
       req = obj["request"] || {}
       request_id = req["id"] || obj["request_id"]
+      idempotency_key = req["idempotency_key"]
       ts = obj["timestamp"]
       data = obj["data"]
 
       if data.is_a?(Hash)
         out = data.dup
         out["request_id"] ||= request_id if request_id
+        out["idempotency_key"] ||= idempotency_key if idempotency_key
         out["timestamp"] ||= ts if ts
         out
       else
