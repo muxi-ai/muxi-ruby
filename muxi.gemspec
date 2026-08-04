@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "MUXI Ruby SDK"
   spec.description = "Ruby SDK for MUXI AI platform - manage AI agent formations and interact with their runtime APIs"
   spec.homepage = "https://github.com/muxi-ai/muxi-ruby"
-  spec.license = "MIT"
+  spec.license = "Apache-2.0"
   spec.required_ruby_version = ">= 3.0.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
